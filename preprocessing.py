@@ -25,15 +25,17 @@ def get_datasets(datasets):
 def get_sim_token(token):
     embedding=[]
     min_dist=999
+    correct_word = ""
     for t in v:
         if levenshtein_distance(token,t) < min_dist:
             min_dist=levenshtein_distance(token,t)
             embedding=v[t]
-    return embedding
+            correct_word=t
+    return correct_word, embedding
 
 def get_embed(token):
     try:
-        return v[token]
+        return token, v[token]
     except KeyError:
         #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
         return get_sim_token(token)
@@ -42,9 +44,16 @@ def get_embed(token):
 def embed_sentence(sentence):
     tokenized = nltk.word_tokenize(sentence)
 
-    #delte all the stopwords
-    tokenized = [w for w in tokenized if not w in stop_words]
+    cleaned_tokens = []
+    embeddings = []
+    # get the token embeddings. If the embedding is not in the vec file take the embedding of the most similar word
+    for token in tokenized:
+        token, embedding = get_embed(token)
+        cleaned_tokens.append(token)
+        embeddings.append(embedding)
 
-    embeddings = [get_embed(token) for token in tokenized]
-
-    return np.average(embeddings, axis=0)
+    # now that we have normal words -> delete all the stopwords embeddings
+    for index, w in enumerate(cleaned_tokens):
+        if w in stop_words:
+            embeddings[index] = [0]
+    return np.average(np.array(list(filter(lambda x: len(x) > 1, embeddings))), axis=0)

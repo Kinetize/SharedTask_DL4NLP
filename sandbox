@@ -4,20 +4,55 @@ from nltk.corpus import stopwords
 import nltk
 from reader import load_vectors
 import numpy as np
+from Levenshtein import distance as levenshtein_distance
+import re
 
-
-
+v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
+stop_words=set(stopwords.words('english'))
 np.random.seed(66)
 
-stop_words=set(stopwords.words('english'))
+def get_sim_token(token):
+    embedding=[]
+    min_dist=999
+    correct_word = ""
+    for t in v:
+        if levenshtein_distance(token,t) < min_dist:
+            min_dist=levenshtein_distance(token,t)
+            embedding=v[t]
+            correct_word=t
+    return correct_word, embedding
 
-txt='The COVID-19 pandemic, also known as the coronavirus pandemic, is an ongoing pandemic of coronavirus disease 2019 (COVID‑19), caused by severe acute respiratory syndrome coronavirus 2 (SARS‑CoV‑2). The outbreak was first identified in Wuhan, China, in December 2019. The World Health Organization declared the outbreak a Public Health Emergency of International Concern on 30 January, and a pandemic on 11 March. As of 9 June 2020, more than 7.12 million cases of COVID-19 have been reported in more than 188 countries and territories, resulting in more than 406,000 deaths; more than 3.29 million people have recovered.'
 
-tokenized = nltk.word_tokenize(txt)
-cleanedAndTokenized = [w for w in tokenized if not w in stop_words]
+def get_embed(token):
+    try:
+        return token, v[token]
+    except KeyError:
+        #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
+        return get_sim_token(token)
 
-print(tokenized)
-print(cleanedAndTokenized)
+def embed_sentence(sentence):
+    tokenized = nltk.word_tokenize(sentence)
+
+    cleaned_tokens=[]
+    embeddings =[]
+    #get the token embeddings. If the embedding is not in the vec file take the embedding of the most similar word
+    for token in tokenized:
+        token, embedding = get_embed(token)
+        cleaned_tokens.append(token)
+        embeddings.append(embedding)
+
+    #now that we have normal words -> delte all the stopwords embeddings
+    for index, w in enumerate(cleaned_tokens):
+        if w in stop_words:
+            embeddings[index]=[0]
+    return np.average(np.array(list(filter(lambda x: len(x)>1,embeddings))), axis=0)
+
+print(embed_sentence("Hallo how are you dear mr. christmas"))
+
+
+
+
+
 
 
 
