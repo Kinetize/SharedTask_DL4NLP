@@ -1,0 +1,36 @@
+#Try out some Edit distances
+
+from Levenshtein import distance as levenshtein_distance
+from reader import load_vectors
+import numpy as np
+
+np.random.seed(66)
+
+v_dict = load_vectors('wiki-news-300d-1M.vec', limit=40000)
+
+dict = {'Hund': np.random.rand(4),
+        'Katze:':np.random.rand(4),
+        'Maus:':np.random.rand(4),
+        'Baum':np.random.rand(4),
+        'Baumhaus': np.random.rand(4)
+        }
+
+def sim_word(word):
+    embedding=[]
+    min_dist=999
+
+    for w in v_dict:
+        if levenshtein_distance(word,w) < min_dist:
+            min_dist=levenshtein_distance(word,w)
+            embedding=v_dict[w]
+            similar_word =w
+    return similar_word, embedding
+
+
+word=''
+
+similar_word, embedding = sim_word(word)
+
+print(similar_word)
+print(embedding)
+

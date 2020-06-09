@@ -1,5 +1,5 @@
 from reader import read_dataset, load_vectors
-
+from Levenshtein import distance as levenshtein_distance
 import nltk
 import numpy as np
 
@@ -19,11 +19,21 @@ def get_datasets(datasets):
     return preprocessed_datasets
 
 
+def get_sim_token(token):
+    embedding=[]
+    min_dist=999
+    for t in v:
+        if levenshtein_distance(token,t) < min_dist:
+            min_dist=levenshtein_distance(token,t)
+            embedding=v[t]
+    return embedding
+
 def get_embed(token):
     try:
         return v[token]
     except KeyError:
-        return np.array([0] * emb_dim)
+        #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
+        return get_sim_token(token)
 
 
 def embed_sentence(sentence):
