@@ -16,7 +16,7 @@ if __name__ == '__main__':
         train_model(model, train[0], np.array(train[0]))
     else:
         model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-        history = model.fit(*train, validation_split=1/3, epochs=300, batch_size=100)
+        history = model.fit(*train, validation_data=dev, epochs=300, batch_size=100)
 
         import matplotlib.pyplot as plt
         training_loss = history.history['loss']

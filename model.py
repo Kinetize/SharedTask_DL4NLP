@@ -3,7 +3,7 @@ import tensorflow as tf
 
 class Similarity(tf.keras.Model):
 
-    def __init__(self, hidden_units=50, dropout_rate=0.5):
+    def __init__(self, hidden_units=300, dropout_rate=0.3):
         super(Similarity, self).__init__()
 
         self.dense_1 = tf.keras.layers.Dense(units=hidden_units, activation='relu')
