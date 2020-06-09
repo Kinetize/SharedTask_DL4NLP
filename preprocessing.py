@@ -13,8 +13,8 @@ def get_datasets(datasets):
     for ds in datasets:
         loaded = read_dataset(ds)
         embedded = np.array([[embed_sentence(sentence) for sentence in t] for t in loaded[1:]])
-        preprocessed_datasets.append((embedded.reshape((embedded.shape[1], embedded.shape[0], embedded.shape[2])),
-                                      np.array(loaded[0])))
+        embedded = np.concatenate([np.expand_dims(embedded[0], axis=1), np.expand_dims(embedded[1], axis=1)], axis=1)
+        preprocessed_datasets.append((embedded, np.array(loaded[0])))
 
     return preprocessed_datasets
 
