@@ -2,9 +2,12 @@ from reader import read_dataset, load_vectors
 from Levenshtein import distance as levenshtein_distance
 import nltk
 import numpy as np
+from nltk.corpus import stopwords
 
 v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
 emb_dim = v['the'].shape[0]
+
+stop_words=set(stopwords.words('english'))
 
 
 def get_datasets(datasets):
@@ -38,6 +41,9 @@ def get_embed(token):
 
 def embed_sentence(sentence):
     tokenized = nltk.word_tokenize(sentence)
+
+    #delte all the stopwords
+    tokenized = [w for w in tokenized if not w in stop_words]
 
     embeddings = [get_embed(token) for token in tokenized]
 

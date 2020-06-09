@@ -1,36 +1,25 @@
 #Try out some Edit distances
 
-from Levenshtein import distance as levenshtein_distance
+from nltk.corpus import stopwords
+import nltk
 from reader import load_vectors
 import numpy as np
 
+
+
 np.random.seed(66)
 
-v_dict = load_vectors('wiki-news-300d-1M.vec', limit=40000)
+stop_words=set(stopwords.words('english'))
 
-dict = {'Hund': np.random.rand(4),
-        'Katze:':np.random.rand(4),
-        'Maus:':np.random.rand(4),
-        'Baum':np.random.rand(4),
-        'Baumhaus': np.random.rand(4)
-        }
+txt='The COVID-19 pandemic, also known as the coronavirus pandemic, is an ongoing pandemic of coronavirus disease 2019 (COVID‑19), caused by severe acute respiratory syndrome coronavirus 2 (SARS‑CoV‑2). The outbreak was first identified in Wuhan, China, in December 2019. The World Health Organization declared the outbreak a Public Health Emergency of International Concern on 30 January, and a pandemic on 11 March. As of 9 June 2020, more than 7.12 million cases of COVID-19 have been reported in more than 188 countries and territories, resulting in more than 406,000 deaths; more than 3.29 million people have recovered.'
 
-def sim_word(word):
-    embedding=[]
-    min_dist=999
+tokenized = nltk.word_tokenize(txt)
+cleanedAndTokenized = [w for w in tokenized if not w in stop_words]
 
-    for w in v_dict:
-        if levenshtein_distance(word,w) < min_dist:
-            min_dist=levenshtein_distance(word,w)
-            embedding=v_dict[w]
-            similar_word =w
-    return similar_word, embedding
+print(tokenized)
+print(cleanedAndTokenized)
 
 
-word=''
 
-similar_word, embedding = sim_word(word)
 
-print(similar_word)
-print(embedding)
 
