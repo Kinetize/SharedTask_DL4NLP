@@ -5,6 +5,9 @@ import numpy as np
 from nltk.corpus import stopwords
 import re
 
+np.random.seed(100)
+
+
 v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
 emb_dim = v['the'].shape[0]
 

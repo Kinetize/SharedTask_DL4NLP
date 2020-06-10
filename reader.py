@@ -1,5 +1,7 @@
 import numpy as np
 
+np.random.seed(100)
+
 
 def read_dataset(dataset):
     data = ([], [], [])

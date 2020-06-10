@@ -4,6 +4,8 @@ from preprocessing import get_datasets
 
 import numpy as np
 
+np.random.seed(100)
+
 
 if __name__ == '__main__':
     run_eagerly = False

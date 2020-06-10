@@ -1,6 +1,9 @@
 import tensorflow as tf
 
 
+tf.random.set_seed(100)
+
+
 class Similarity(tf.keras.Model):
 
     def __init__(self, hidden_units=300, dropout_rate=0.3):
