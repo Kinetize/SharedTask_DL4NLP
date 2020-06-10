@@ -1,5 +1,6 @@
 from reader import read_dataset, load_vectors
-from Levenshtein import distance as levenshtein_distance
+from Levenshtein import distance as lev_dist
+from pyxdameraulevenshtein import damerau_levenshtein_distance as dam_lev_dist
 import nltk
 import numpy as np
 from nltk.corpus import stopwords
@@ -31,8 +32,9 @@ def get_sim_token(token):
     min_dist=999
     correct_word = ""
     for t in v:
-        if levenshtein_distance(token,t) < min_dist:
-            min_dist=levenshtein_distance(token,t)
+        dist=lev_dist(token,t)
+        if dist < min_dist:
+            min_dist=dist
             embedding=v[t]
             correct_word=t
     return correct_word, embedding
@@ -50,7 +52,7 @@ def embed_sentence(sentence):
 
     cleaned_tokens = []
     embeddings = []
-    # get the token embeddings. If the embedding is not in the vec file take the embedding of the most similar word
+    # get the token embeddings. If the token is not in the vec file take the embedding of the most similar word
     for token in tokenized:
         token, embedding = get_embed(token)
         cleaned_tokens.append(token)

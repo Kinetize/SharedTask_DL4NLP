@@ -5,6 +5,7 @@ import nltk
 from reader import load_vectors
 import numpy as np
 from Levenshtein import distance as levenshtein_distance
+from pyxdameraulevenshtein import damerau_levenshtein_distance as dam_lev_dist
 import re
 
 v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
@@ -42,7 +43,7 @@ def embed_sentence(sentence):
         embeddings.append(embedding)
     copy_embeddings=embeddings.copy()
     # now that we have normal words -> delte all the stopwords embeddings and embeddings that to not contain letters/digits
-    nonPunct = re.compile('.*[A-Za-z0-9!?].*')  # must contain a letter or digit
+    nonPunct = re.compile('.*[A-Za-z0-9].*')  # must contain a letter or digit
     for index, w in enumerate(cleaned_tokens):
         if w in stop_words or not nonPunct.match(w):
             copy_embeddings[index] = [0]
@@ -51,7 +52,9 @@ def embed_sentence(sentence):
         return np.average(filtered, axis=0)
     return np.average(embeddings)
 
-print(embed_sentence(", ... "))
+
+
+
 
 
 
