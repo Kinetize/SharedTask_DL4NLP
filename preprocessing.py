@@ -1,6 +1,6 @@
 from reader import read_dataset, load_vectors
-from Levenshtein import distance as lev_dist
-from pyxdameraulevenshtein import damerau_levenshtein_distance as dam_lev_dist
+import Levenshtein
+import pyxdameraulevenshtein
 import nltk
 import numpy as np
 from nltk.corpus import stopwords
@@ -29,12 +29,12 @@ def get_datasets(datasets):
 
 def get_sim_token(token):
     embedding=[]
-    min_dist=999
+    max_ratio=0
     correct_word = ""
     for t in v:
-        dist=lev_dist(token,t)
-        if dist < min_dist:
-            min_dist=dist
+        ratio=Levenshtein.jaro(token,t)
+        if ratio > max_ratio:
+            max_ratio=ratio
             embedding=v[t]
             correct_word=t
     return correct_word, embedding

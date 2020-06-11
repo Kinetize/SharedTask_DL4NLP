@@ -4,8 +4,8 @@ from nltk.corpus import stopwords
 import nltk
 from reader import load_vectors
 import numpy as np
-from Levenshtein import distance as levenshtein_distance
-from pyxdameraulevenshtein import damerau_levenshtein_distance as dam_lev_dist
+import Levenshtein as lev
+import pyxdameraulevenshtein as dam_lev
 import re
 
 v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
@@ -54,7 +54,38 @@ def embed_sentence(sentence):
 
 
 
+a = 'Hochhaus'
+b = 'hausbau'
+c = 'Lachen'
 
+x='abcdefghi'
+y='ihgfedcba'
+
+print('Levensteindistance:')
+print(lev.distance(a,b))
+print(lev.distance(a,c))
+print(lev.distance(x,y))
+print('Levenstein-ratio:')
+print(lev.ratio(a,b))
+print(lev.ratio(a,c))
+print(lev.ratio(x,y))
+print('Jaro:')
+print(lev.jaro(a,b))
+print(lev.jaro(a,c))
+print(lev.jaro(x,y))
+print(lev.jaro("ab","ab"))
+print('Jaro-winkler:')
+print(lev.jaro_winkler(a,b))
+print(lev.jaro_winkler(a,c))
+print(lev.jaro_winkler(x,y))
+print('Dam_lev_normalized:')
+print(dam_lev.normalized_damerau_levenshtein_distance(a,b))
+print(dam_lev.normalized_damerau_levenshtein_distance(a,c))
+print(dam_lev.normalized_damerau_levenshtein_distance(x,y))
+print('Dam_lev:')
+print(dam_lev.damerau_levenshtein_distance(a,b))
+print(dam_lev.damerau_levenshtein_distance(a,c))
+print(dam_lev.damerau_levenshtein_distance(x,y))
 
 
 
