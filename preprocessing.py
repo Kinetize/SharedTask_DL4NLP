@@ -3,7 +3,7 @@ from reader import read_dataset, load_vectors
 import nltk
 import numpy as np
 
-v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
+v = load_vectors('wiki.en.bin')
 emb_dim = v['the'].shape[0]
 
 

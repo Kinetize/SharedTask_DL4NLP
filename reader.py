@@ -20,14 +20,18 @@ def load_vectors(fname, limit=20000):
     Taken and adapted from https://fasttext.cc/docs/en/english-vectors.html
     """
 
-    fin = open('data/' + fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
-    n, d = map(int, fin.readline().split())
-    data = {}
-    for i, line in enumerate(fin):
-        tokens = line.rstrip().split(' ')
-        data[tokens[0]] = np.array([float(t) for t in tokens[1:]])
+    if fname.endswith(".bin"):  # Use FastText sub-word model:
+        import fasttext
+        return fasttext.load_model('data/' + fname)
+    else:
+        fin = open('data/' + fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+        n, d = map(int, fin.readline().split())
+        data = {}
+        for i, line in enumerate(fin):
+            tokens = line.rstrip().split(' ')
+            data[tokens[0]] = np.array([float(t) for t in tokens[1:]])
 
-        if i >= limit:
-            break
+            if i >= limit:
+                break
 
-    return data
+        return data
