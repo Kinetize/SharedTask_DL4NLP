@@ -1,0 +1,3 @@
+[submodule "UKP_Visual_Attacks"]
+	path = UKP_Visual_Attacks
+	url = https://github.com/UKPLab/naacl2019-like-humans-visual-attacks

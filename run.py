@@ -1,6 +1,7 @@
 from model import Similarity
 from train import train_model
 from preprocessing import get_datasets
+from adversarial_attacks import VIPER_ICES, VIPER_DCES, VIPER_ECES, DisemvowelingAttack, AttackPipeline
 
 import numpy as np
 
@@ -8,7 +9,9 @@ import numpy as np
 if __name__ == '__main__':
     run_eagerly = False
 
-    train, dev, test, test_scoreboard = get_datasets(['training', 'development', 'test-hex06', 'test-scoreboard'])
+    train, dev, test, test_scoreboard = get_datasets([('training', AttackPipeline([DisemvowelingAttack(p=0.2),
+                                                                                   VIPER_ICES(p=0.1)])),
+                                                      'development', 'test-hex06', 'test-scoreboard'])
 
     model = Similarity()
 

@@ -11,7 +11,14 @@ def get_datasets(datasets):
     preprocessed_datasets = []
 
     for ds in datasets:
+        # Load the data set and apply an adversarial attack before if desired:
+        if type(ds) is not str:  # Not only dataset path -> adversarial attacker has been appended
+            ds, attack = ds
+            ds = attack(ds)
+
         loaded = read_dataset(ds)
+
+        # Embed the data:
         embedded = np.array([[embed_sentence(sentence) for sentence in t] for t in loaded[1:]])
         embedded = np.concatenate([np.expand_dims(embedded[0], axis=1), np.expand_dims(embedded[1], axis=1)], axis=1)
         preprocessed_datasets.append((embedded, np.array(loaded[0])))
