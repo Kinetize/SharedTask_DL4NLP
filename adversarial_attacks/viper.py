@@ -1,40 +1,9 @@
-import subprocess
-from queue import SimpleQueue
 import os
-from abc import ABC, abstractmethod
-import random
+import subprocess
+from abc import abstractmethod
+from queue import SimpleQueue
 
-
-# ### (Abstract) Base attack classes ###
-
-class AdversarialAttackBase(ABC):
-    def attack(self, dataset, perturbed_dataset=None):
-
-        # Automatically infers the perturbed dataset name if not specified:
-        if perturbed_dataset is None:
-            perturbed_dataset = f"{dataset}-{self.attack_code}"
-        perturbed_dataset_path = f"data/{perturbed_dataset}-dataset.txt"
-
-        if os.path.isfile(perturbed_dataset_path): # Skip attack if perturbed dataset file does already exist
-            print(f"Adversarial attack {self.attack_code} on {dataset}: "
-                  f"Pre-computed perturbed data ({perturbed_dataset}) is reused.")
-        else:
-            # Apply the adversarial attack:
-            self._attack(dataset_path=f"data/{dataset}-dataset.txt",
-                         perturbed_dataset_path=perturbed_dataset_path)
-
-        return perturbed_dataset
-
-    @abstractmethod
-    def _attack(self, dataset_path, perturbed_dataset_path):
-        ...  # Needs to be implemented in subclasses!
-
-    def __call__(self, dataset, perturbed_dataset=None):
-        return self.attack(dataset=dataset, perturbed_dataset=perturbed_dataset)
-
-    @property
-    def attack_code(self):
-        return self.__class__.__name__
+from adversarial_attacks.basics import AdversarialAttackBase
 
 
 class VIPERAttackBase(AdversarialAttackBase):
@@ -115,8 +84,6 @@ class VIPERAttackBase(AdversarialAttackBase):
                     sentence_a, sentence_b = None, None  # Clean sentences for next iteration
 
 
-# ### Concrete attack classes ###
-
 class VIPER_ICES(VIPERAttackBase):
 
     def __init__(self, p,
@@ -146,7 +113,6 @@ class VIPER_DCES(VIPERAttackBase):
 
         self._tmp_in_file_path = "data/TMP_DCES.txt"  # VIPER_DCES requires the input file path as argument
         self._char_sep_len = 1  # Counteract VIPER_DCES inserting a bank separator (of length 1) between each character
-
 
     def _in_stream(self, in_file_path):
         in_str = super(VIPER_DCES, self)._in_stream(in_file_path=in_file_path)
@@ -186,69 +152,3 @@ class VIPER_ECES(VIPERAttackBase):
                                      f"{self.p}", self.selected_neighbors_file],
                                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, encoding='utf-8')
         return sub_proc
-
-
-class DisemvowelingAttack(AdversarialAttackBase):
-
-    vowels = "aeiouAEIOU"
-
-    def __init__(self, p):
-        super(DisemvowelingAttack, self).__init__()
-        
-        assert 0.0 <= p <= 1.0, f"p = {p} is no valid probability value between 0 and 1!"
-        self.p = p
-
-    def _attack(self, dataset_path, perturbed_dataset_path):
-        with open(dataset_path, 'r', encoding='utf-8') as in_handle, \
-             open(perturbed_dataset_path, 'w', encoding='utf-8') as out_handle:
-            for line in in_handle:
-                perturbed_line = ""
-                line_split = line.split('\t')
-
-                if len(line_split) == 3:  # Supervised data set
-                    perturbed_line = f"{line_split[0]}\t"  # Put the label at the beginning of the perturbed line
-
-                # Perturb sentences:
-                sentences = '\t'.join(line_split[-2:])
-                perturbed_line += self._disemvowel(sentences)
-
-                out_handle.write(perturbed_line)
-
-    def _disemvowel(self, text):
-        # Keep character if it is not a vowel or random number (between 0 and 1) is greater than p
-        # (which is equivalent to remove a character with probability p if it is a vowel)
-        return ''.join(char for char in list(text)
-                       if char not in self.vowels or random.random() > self.p)
-
-    @property
-    def attack_code(self):
-        return f"{self.__class__.__name__}(p={self.p})"  # As p is a important parameter, append it to the attack code
-
-
-class AttackPipeline(AdversarialAttackBase):
-    """
-    Conveniently pipelines multiple attacks (automatically cleans intermediate data files, etc).
-    """
-
-    def __init__(self, attacks):
-        super(AttackPipeline, self).__init__()
-
-        self.attacks = attacks
-
-    def attack(self, dataset, perturbed_dataset=None):
-        assert perturbed_dataset is None, "AttackPipeline does not support custom naming of the perturbed dataset."
-
-        # Iteratively perform attacks in order to build the final perturbed dataset
-        perturbed_dataset = dataset
-        for attack in self.attacks:
-            perturbed_dataset = attack(perturbed_dataset)
-        assert self.attack_code in perturbed_dataset, self.attack_code  # Sanity check
-
-        return perturbed_dataset
-
-    def _attack(self, dataset_path, perturbed_dataset_path):
-        pass  # Nothing needs to be done here since AttackPipeline is no real attack but a wrapper class -> self.attack
-
-    @property
-    def attack_code(self):
-        return "-".join(attack.attack_code for attack in self.attacks)
