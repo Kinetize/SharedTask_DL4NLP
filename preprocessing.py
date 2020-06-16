@@ -1,15 +1,13 @@
 from reader import read_dataset, load_vectors
 import Levenshtein
-import pyxdameraulevenshtein
 import nltk
 import numpy as np
 from nltk.corpus import stopwords
-import re
 
 np.random.seed(100)
 
 
-use_bert = True
+use_bert = False
 
 if not use_bert:
     v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
@@ -37,8 +35,15 @@ def get_datasets(datasets):
 
         loaded = read_dataset(ds)
 
+        # Remove disallowed special characters:
+        disallowed_special_chars = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', ':',
+                                    ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~']
+
+        def remove_disallowed_special_chars(text):
+            return [''.join(char for char in sent if char not in disallowed_special_chars) for sent in text]
+
         # Embed the data:
-        embedded = np.array([embed(t) for t in loaded[1:]])
+        embedded = np.array([embed(remove_disallowed_special_chars(t)) for t in loaded[1:]])
         embedded = np.concatenate([np.expand_dims(embedded[0], axis=1), np.expand_dims(embedded[1], axis=1)], axis=1)
         preprocessed_datasets.append((embedded, np.array(loaded[0])))
 
@@ -75,11 +80,10 @@ def embed_sentence(sentence):
         token, embedding = get_embed(token)
         cleaned_tokens.append(token)
         embeddings.append(embedding)
-        copy_embeddings=embeddings.copy()
+    copy_embeddings=embeddings.copy()
     # now that we have normal words -> delete the stopwords embeddings
-    nonPunct = re.compile('.*[A-Za-z0-9].*')  # must contain a letter or digit
     for index, w in enumerate(cleaned_tokens):
-        if w in stop_words or not nonPunct.match(w):
+        if w in stop_words:
             copy_embeddings[index] = [0]
     filtered = np.array(list(filter(lambda x: len(x) > 1, copy_embeddings)))
     if np.count_nonzero(filtered) > 0:

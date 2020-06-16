@@ -12,9 +12,10 @@ np.random.seed(100)
 if __name__ == '__main__':
     run_eagerly = False
 
-    train, dev, test, test_scoreboard = get_datasets([('training', AttackPipeline([DisemvowelingAttack(p=0.2),
-                                                                                   VIPER_ICES(p=0.1)])),
-                                                      'development', 'test-hex06', 'test-scoreboard'])
+    attack_pipeline = AttackPipeline([DisemvowelingAttack(p=0.2), VIPER_ICES(p=0.1)])
+    train, dev, test, test_scoreboard = get_datasets([('training', attack_pipeline),
+                                                      ('development', attack_pipeline),
+                                                      'test-hex06', 'test-scoreboard'])
 
     model = Similarity()
 
