@@ -1,0 +1,98 @@
+#Try out some Edit distances
+
+from nltk.corpus import stopwords
+import nltk
+from reader import load_vectors
+import numpy as np
+import Levenshtein as lev
+import pyxdameraulevenshtein as dam_lev
+import re
+
+v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
+stop_words=set(stopwords.words('english'))
+np.random.seed(66)
+
+def get_sim_token(token):
+    embedding=[]
+    min_dist=999
+    correct_word = ""
+    for t in v:
+        if levenshtein_distance(token,t) < min_dist:
+            min_dist=levenshtein_distance(token,t)
+            embedding=v[t]
+            correct_word=t
+    return correct_word, embedding
+
+
+def get_embed(token):
+    try:
+        return token, v[token]
+    except KeyError:
+        #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
+        return get_sim_token(token)
+
+def embed_sentence(sentence):
+    tokenized = nltk.word_tokenize(sentence)
+
+    cleaned_tokens=[]
+    embeddings =[]
+    #get the token embeddings. If the embedding is not in the vec file take the embedding of the most similar word
+    for token in tokenized:
+        token, embedding = get_embed(token)
+        cleaned_tokens.append(token)
+        embeddings.append(embedding)
+    copy_embeddings=embeddings.copy()
+    # now that we have normal words -> delte all the stopwords embeddings and embeddings that to not contain letters/digits
+    nonPunct = re.compile('.*[A-Za-z0-9].*')  # must contain a letter or digit
+    for index, w in enumerate(cleaned_tokens):
+        if w in stop_words or not nonPunct.match(w):
+            copy_embeddings[index] = [0]
+    filtered = np.array(list(filter(lambda x: len(x) > 1, copy_embeddings)))
+    if np.count_nonzero(filtered) > 0:
+        return np.average(filtered, axis=0)
+    return np.average(embeddings)
+
+
+
+a = 'Hochhaus'
+b = 'hausbau'
+c = 'Lachen'
+
+x='abcdefghi'
+y='ihgfedcba'
+
+print('Levensteindistance:')
+print(lev.distance(a,b))
+print(lev.distance(a,c))
+print(lev.distance(x,y))
+print('Levenstein-ratio:')
+print(lev.ratio(a,b))
+print(lev.ratio(a,c))
+print(lev.ratio(x,y))
+print('Jaro:')
+print(lev.jaro(a,b))
+print(lev.jaro(a,c))
+print(lev.jaro(x,y))
+print(lev.jaro("ab","ab"))
+print('Jaro-winkler:')
+print(lev.jaro_winkler(a,b))
+print(lev.jaro_winkler(a,c))
+print(lev.jaro_winkler(x,y))
+print('Dam_lev_normalized:')
+print(dam_lev.normalized_damerau_levenshtein_distance(a,b))
+print(dam_lev.normalized_damerau_levenshtein_distance(a,c))
+print(dam_lev.normalized_damerau_levenshtein_distance(x,y))
+print('Dam_lev:')
+print(dam_lev.damerau_levenshtein_distance(a,b))
+print(dam_lev.damerau_levenshtein_distance(a,c))
+print(dam_lev.damerau_levenshtein_distance(x,y))
+
+
+
+
+
+
+
+
+
+
