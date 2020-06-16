@@ -3,11 +3,15 @@ import Levenshtein
 import nltk
 import numpy as np
 from nltk.corpus import stopwords
+from nltk import FreqDist
+from nltk.corpus import brown
+nltk.download('brown')
 
 np.random.seed(100)
 
 
 use_bert = False
+use_weighted_embeddings = True
 
 if not use_bert:
     v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
@@ -23,6 +27,9 @@ else:
 
 stop_words=set(stopwords.words('english'))
 
+fd = FreqDist((word.lower() for word in brown.words()))
+
+freq_dict = {key: value / fd.N() for (key, value) in dict(fd).items()}
 
 def get_datasets(datasets):
     preprocessed_datasets = []
@@ -78,15 +85,35 @@ def embed_sentence(sentence):
     # get the token embeddings. If the token is not in the vec file take the embedding of the most similar word
     for token in tokenized:
         token, embedding = get_embed(token)
+        # sometimes embedding gets an empty list back (only occurs with ratio distances)
+        if len(embedding) == 0:
+            embeddings.append(np.zeros(300))
+        else:
+            embeddings.append(embedding)
         cleaned_tokens.append(token)
-        embeddings.append(embedding)
     copy_embeddings=embeddings.copy()
-    # now that we have normal words -> delete the stopwords embeddings
-    for index, w in enumerate(cleaned_tokens):
-        if w in stop_words:
-            copy_embeddings[index] = [0]
-    filtered = np.array(list(filter(lambda x: len(x) > 1, copy_embeddings)))
-    if np.count_nonzero(filtered) > 0:
-        return np.average(filtered, axis=0)
-    return np.average(embeddings, axis=0)
+
+
+    if use_weighted_embeddings:
+        # weight the embeddings with their inverse freq_dist
+        weights = []
+        for w in cleaned_tokens:
+            try:
+                weights.append(1 / float(freq_dict[w]))
+            except:
+                weights.append(0.0)
+        try:
+            return np.average(np.array(embeddings), axis=0, weights=np.array(weights).astype(float))
+        except:
+            return np.average(np.array(embeddings), axis=0)
+
+    else:
+        # now that we have normal words -> delete the stopwords embeddings
+        for index, w in enumerate(cleaned_tokens):
+            if w in stop_words:
+                copy_embeddings[index] = [0]
+        filtered = np.array(list(filter(lambda x: len(x) > 1, copy_embeddings)))
+        if np.count_nonzero(filtered) > 0:
+            return np.average(filtered, axis=0)
+        return np.average(embeddings, axis=0)
 
