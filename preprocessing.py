@@ -3,8 +3,19 @@ from reader import read_dataset, load_vectors
 import nltk
 import numpy as np
 
-v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
-emb_dim = v['the'].shape[0]
+use_bert = True
+
+if not use_bert:
+    v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
+    emb_dim = v['the'].shape[0]
+
+    embed = lambda sentences: np.array([embed_sentence(sentence) for sentence in sentences])
+else:
+    from sentence_transformers import SentenceTransformer
+    model = SentenceTransformer('bert-base-nli-mean-tokens')
+    emb_dim = 768
+
+    embed = lambda sentences: model.encode(sentences)
 
 
 def get_datasets(datasets):
@@ -12,7 +23,7 @@ def get_datasets(datasets):
 
     for ds in datasets:
         loaded = read_dataset(ds)
-        embedded = np.array([[embed_sentence(sentence) for sentence in t] for t in loaded[1:]])
+        embedded = np.array([embed(t) for t in loaded[1:]])
         embedded = np.concatenate([np.expand_dims(embedded[0], axis=1), np.expand_dims(embedded[1], axis=1)], axis=1)
         preprocessed_datasets.append((embedded, np.array(loaded[0])))
 
