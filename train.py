@@ -1,5 +1,7 @@
 import numpy as np
 import tensorflow as tf
+np.random.seed(100)
+tf.random.set_seed(100)
 
 
 def train_model(model, train_in, train_labels, batch_size=100, epochs=300):

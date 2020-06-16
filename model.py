@@ -1,16 +1,21 @@
 import tensorflow as tf
 
 
+tf.random.set_seed(100)
+
+
 class Similarity(tf.keras.Model):
 
-    def __init__(self, hidden_units=300, dropout_rate=0.3):
+    def __init__(self, hidden_units=500, dropout_rate=0.5):
         super(Similarity, self).__init__()
 
         self.dense_1 = tf.keras.layers.Dense(units=hidden_units, activation='relu')
-        self.dense_2 = tf.keras.layers.Dense(units=hidden_units // 2, activation='relu')
+        self.dense_2 = tf.keras.layers.Dense(units=hidden_units, activation='relu')
+        self.dense_3 = tf.keras.layers.Dense(units=hidden_units // 2, activation='relu')
 
         self.dropout_1 = tf.keras.layers.Dropout(rate=dropout_rate)
         self.dropout_2 = tf.keras.layers.Dropout(rate=dropout_rate)
+        self.dropout_3 = tf.keras.layers.Dropout(rate=dropout_rate)
 
         self.out = tf.keras.layers.Dense(units=1, activation='sigmoid')
 
@@ -22,5 +27,8 @@ class Similarity(tf.keras.Model):
 
         x = self.dense_2(x)
         x = self.dropout_2(x, training=training)
+
+        x = self.dense_3(x)
+        x = self.dropout_3(x, training=training)
 
         return self.out(x)

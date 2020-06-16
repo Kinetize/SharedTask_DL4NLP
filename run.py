@@ -3,7 +3,10 @@ from train import train_model
 from preprocessing import get_datasets
 from adversarial_attacks import VIPER_ICES, VIPER_DCES, VIPER_ECES, DisemvowelingAttack, AttackPipeline
 
+
 import numpy as np
+
+np.random.seed(100)
 
 
 if __name__ == '__main__':
@@ -19,7 +22,7 @@ if __name__ == '__main__':
         train_model(model, train[0], np.array(train[0]))
     else:
         model.compile(optimizer='adam', loss='mse', metrics=['mae'])
-        history = model.fit(*train, validation_data=dev, epochs=300, batch_size=100)
+        history = model.fit(*train, validation_data=dev, epochs=400, batch_size=100)
 
         import matplotlib.pyplot as plt
         training_loss = history.history['loss']
@@ -36,6 +39,6 @@ if __name__ == '__main__':
     print(model.evaluate(*test, batch_size=100))
     predictions = model.predict(test_scoreboard[0], batch_size=100)
 
-    with open('out.txt', 'w') as f:
+    with open('scores.txt', 'w') as f:
         for p in predictions:
             f.write(f'{p[0]}\n')
