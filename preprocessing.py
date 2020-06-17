@@ -5,6 +5,7 @@ import numpy as np
 from nltk.corpus import stopwords
 from nltk import FreqDist
 from nltk.corpus import brown
+from gensim.models import KeyedVectors
 nltk.download('brown')
 
 np.random.seed(100)
@@ -12,6 +13,7 @@ np.random.seed(100)
 
 use_bert = False
 use_weighted_embeddings = True
+use_concat_visual_char_embeddings = False
 
 if not use_bert:
     v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
@@ -24,6 +26,11 @@ else:
     emb_dim = 768
 
     embed = lambda sentences: model.encode(sentences)
+
+# Load the visual character embeddings:
+if use_concat_visual_char_embeddings:
+    vce = KeyedVectors.load_word2vec_format("data/vce.normalized")
+    emb_dim += vce['a'].shape[0]
 
 stop_words=set(stopwords.words('english'))
 
@@ -70,12 +77,18 @@ def get_sim_token(token):
     return correct_word, embedding
 
 def get_embed(token):
+    orig_token = token
     try:
-        return token, v[token]
+        word_embedding = v[token]
     except KeyError:
         #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
-        return get_sim_token(token)
+        token, word_embedding = get_sim_token(token)
 
+    if use_concat_visual_char_embeddings and len(token) > 0:
+        vis_embedding = embed_token_visually(orig_token)  # Using the orig token is crucial to notice orig perturbations
+        word_embedding = np.append(vis_embedding, word_embedding)
+
+    return token, word_embedding
 
 def embed_sentence(sentence):
     tokenized = nltk.word_tokenize(sentence)
@@ -87,7 +100,7 @@ def embed_sentence(sentence):
         token, embedding = get_embed(token)
         # sometimes embedding gets an empty list back (only occurs with ratio distances)
         if len(embedding) == 0:
-            embeddings.append(np.zeros(300))
+            embeddings.append(np.zeros(emb_dim))
         else:
             embeddings.append(embedding)
         cleaned_tokens.append(token)
@@ -117,3 +130,6 @@ def embed_sentence(sentence):
             return np.average(filtered, axis=0)
         return np.average(embeddings, axis=0)
 
+
+def embed_token_visually(token):
+    return np.mean(vce[list(token)], axis=0)
