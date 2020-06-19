@@ -16,9 +16,11 @@ def spearman_metric(y_true, y_pred):
 if __name__ == '__main__':
     run_eagerly = False
 
-    attack_pipeline = AttackPipeline([DisemvowelingAttack(p=0.2), VIPER_ICES(p=0.1)])
-    train, dev, test, test_scoreboard = get_datasets([('training', attack_pipeline),
-                                                      ('development', attack_pipeline),
+    attack_pipeline = AttackPipeline([DisemvowelingAttack(p=0.1), VIPER_ECES(p=0.1)])
+    train, dev, test, test_scoreboard = get_datasets(['training',
+                                                      #('training', attack_pipeline),
+                                                      'development',
+                                                      #('development', attack_pipeline),
                                                       'test-hex06', 'test-scoreboard'])
 
     model = Similarity()
@@ -49,4 +51,4 @@ if __name__ == '__main__':
 
     with open('scores.txt', 'w') as f:
         for p in predictions:
-            f.write(f'{p[0]}\n')
+            f.write(f'{p[0]:.2f}\n')
