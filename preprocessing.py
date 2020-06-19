@@ -6,7 +6,6 @@ from nltk.corpus import stopwords
 from nltk import FreqDist
 from nltk.corpus import brown
 from gensim.models import KeyedVectors
-nltk.download('brown')
 
 np.random.seed(100)
 
@@ -14,6 +13,7 @@ np.random.seed(100)
 use_bert = False
 use_weighted_embeddings = True
 use_concat_visual_char_embeddings = False
+use_edit_distance_correction = True
 
 if not use_bert:
     v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
@@ -28,15 +28,17 @@ else:
     embed = lambda sentences: model.encode(sentences)
 
 # Load the visual character embeddings:
+# Download here: https://public.ukp.informatik.tu-darmstadt.de/naacl2019-like-humans-visual-attacks/
+vce = KeyedVectors.load_word2vec_format("data/vce.normalized")
 if use_concat_visual_char_embeddings:
-    vce = KeyedVectors.load_word2vec_format("data/vce.normalized")
     emb_dim += vce['a'].shape[0]
 
 stop_words=set(stopwords.words('english'))
 
-fd = FreqDist((word.lower() for word in brown.words()))
-
-freq_dict = {key: value / fd.N() for (key, value) in dict(fd).items()}
+if use_weighted_embeddings:
+    nltk.download('brown')
+    fd = FreqDist((word.lower() for word in brown.words()))
+    freq_dict = {key: value / fd.N() for (key, value) in dict(fd).items()}
 
 def get_datasets(datasets):
     preprocessed_datasets = []
@@ -49,15 +51,37 @@ def get_datasets(datasets):
 
         loaded = read_dataset(ds)
 
-        # Remove disallowed special characters:
-        disallowed_special_chars = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', ':',
-                                    ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~']
+        # Remove disallowed special characters (gathered by getting all characters for which str.isalnum yields False):
+        disallowed_special_chars = ''.join(['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/',
+                                            ':', ';', '<', '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|',
+                                            '}', '~', '‘', '´', '’', '—', '‚', '–', '“', '”', '˅', '˰', '¶', '˒', '։',
+                                            '·', '֊', '˻', '¦', '˯', '˼', '˳', '˗', '”', '˨', '˖', '¡', '˕', '“', '˥',
+                                            '˦', '\x12', '˩', '˱', '֍', '¸', '͵', '˿', '˓', '˺', '£', '˭', '˲'])
+        visual_equivalents = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" + disallowed_special_chars
 
-        def remove_disallowed_special_chars(text):
-            return [''.join(char for char in sent if char not in disallowed_special_chars) for sent in text]
+        def remove_disallowed_chars(text):
+            cleaned_text = list()
+            replacements = set()
+            for sent in text:
+                cleaned_sent = list()
+                for char in sent:
+                    # Replace non-alphanum chars with their alphanum visual equivalent:
+                    if not char.isspace() and char not in visual_equivalents:
+                        most_sim_alpha_num_char_idx = np.argmax([vce.similarity(char, anc) for anc in visual_equivalents])
+                        most_sim_char = visual_equivalents[int(most_sim_alpha_num_char_idx)]
+                        replacements.add((char, most_sim_char))
+                        char = most_sim_char
+                    # Remove disallowed special characters:
+                    if char in disallowed_special_chars:
+                        char = ''
+                    cleaned_sent.append(char)
+                cleaned_sent = ''.join(cleaned_sent)
+                cleaned_text.append(cleaned_sent)
+            print(f"Replaced characters: {', '.join(f'{c} -> {r}' for c, r in sorted(replacements))}")
+            return cleaned_text
 
         # Embed the data:
-        embedded = np.array([embed(remove_disallowed_special_chars(t)) for t in loaded[1:]])
+        embedded = np.array([embed(remove_disallowed_chars(t)) for t in loaded[1:]])
         embedded = np.concatenate([np.expand_dims(embedded[0], axis=1), np.expand_dims(embedded[1], axis=1)], axis=1)
         preprocessed_datasets.append((embedded, np.array(loaded[0])))
 
@@ -81,8 +105,16 @@ def get_embed(token):
     try:
         word_embedding = v[token]
     except KeyError:
-        #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
-        token, word_embedding = get_sim_token(token)
+        try:
+            word_embedding = v[token.lower()]
+            token = token.lower()
+        except KeyError:
+            if use_edit_distance_correction:
+                #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
+                token, word_embedding = get_sim_token(token)
+                #print(f"Orig: {orig_token}, replaced {token}")
+            else:
+                word_embedding = np.zeros(emb_dim)
 
     if use_concat_visual_char_embeddings and len(token) > 0:
         vis_embedding = embed_token_visually(orig_token)  # Using the orig token is crucial to notice orig perturbations
