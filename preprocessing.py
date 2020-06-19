@@ -6,7 +6,6 @@ from nltk.corpus import stopwords
 from nltk import FreqDist
 from nltk.corpus import brown
 from gensim.models import KeyedVectors
-nltk.download('brown')
 
 np.random.seed(100)
 
@@ -14,6 +13,7 @@ np.random.seed(100)
 use_bert = False
 use_weighted_embeddings = True
 use_concat_visual_char_embeddings = False
+use_edit_distance_correction = True
 
 if not use_bert:
     v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
@@ -35,9 +35,10 @@ if use_concat_visual_char_embeddings:
 
 stop_words=set(stopwords.words('english'))
 
-fd = FreqDist((word.lower() for word in brown.words()))
-
-freq_dict = {key: value / fd.N() for (key, value) in dict(fd).items()}
+if use_weighted_embeddings:
+    nltk.download('brown')
+    fd = FreqDist((word.lower() for word in brown.words()))
+    freq_dict = {key: value / fd.N() for (key, value) in dict(fd).items()}
 
 def get_datasets(datasets):
     preprocessed_datasets = []
@@ -104,8 +105,16 @@ def get_embed(token):
     try:
         word_embedding = v[token]
     except KeyError:
-        #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
-        token, word_embedding = get_sim_token(token)
+        try:
+            word_embedding = v[token.lower()]
+            token = token.lower()
+        except KeyError:
+            if use_edit_distance_correction:
+                #take the w2v of the most similar word out of the w2v dict -> compute similarity via the edit dist(levenshtein_distance).
+                token, word_embedding = get_sim_token(token)
+                #print(f"Orig: {orig_token}, replaced {token}")
+            else:
+                word_embedding = np.zeros(emb_dim)
 
     if use_concat_visual_char_embeddings and len(token) > 0:
         vis_embedding = embed_token_visually(orig_token)  # Using the orig token is crucial to notice orig perturbations
