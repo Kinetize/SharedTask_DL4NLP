@@ -5,6 +5,7 @@ from adversarial_attacks import VIPER_ICES, VIPER_DCES, VIPER_ECES, Disemvowelin
 from scipy.stats import spearmanr
 import tensorflow as tf
 import numpy as np
+from bert import get_similarities
 
 np.random.seed(100)
 
@@ -23,6 +24,18 @@ if __name__ == '__main__':
                                                       #('development', attack_pipeline),
                                                       'test-hex06', 'test-scoreboard'])
 
+    # Compute cosine similarities
+    print(f'Train Cosine Sim (Spearman): {spearman_metric(train[1], get_similarities(train))}')
+    print(f'Dev Cosine Sim (Spearman): {spearman_metric(dev[1], get_similarities(dev))}')
+    print(f'Test Cosine Sim (Spearman): {spearman_metric(test[1], get_similarities(test))}')
+
+    similarities = get_similarities(test_scoreboard)
+
+    with open('scores_cos.txt', 'w') as f:
+        for p in similarities:
+            f.write(f'{p}\n')
+
+    # Train Similarity NN:
     model = Similarity()
 
     if run_eagerly:

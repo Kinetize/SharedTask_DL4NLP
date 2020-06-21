@@ -10,22 +10,25 @@ from gensim.models import KeyedVectors
 np.random.seed(100)
 
 
-use_bert = False
-use_weighted_embeddings = True
+use_bert = True
+use_weighted_embeddings = False
 use_concat_visual_char_embeddings = False
 use_edit_distance_correction = True
+use_stop_word_filtering = False
 
+v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
 if not use_bert:
-    v = load_vectors('wiki-news-300d-1M.vec', limit=40000)
     emb_dim = v['the'].shape[0]
 
     embed = lambda sentences: np.array([embed_sentence(sentence) for sentence in sentences])
 else:
     from sentence_transformers import SentenceTransformer
-    model = SentenceTransformer('bert-base-nli-mean-tokens')
+    # Download here: https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/v0.2/
+    model = SentenceTransformer('data/xlm-r-base-en-ko-nli-ststb')
     emb_dim = 768
 
-    embed = lambda sentences: model.encode(sentences)
+    # Does not embed the sentences but applies filtering etc
+    embed = lambda sentences: np.array([embed_sentence(sentence) for sentence in sentences])
 
 # Load the visual character embeddings:
 # Download here: https://public.ukp.informatik.tu-darmstadt.de/naacl2019-like-humans-visual-attacks/
@@ -153,14 +156,20 @@ def embed_sentence(sentence):
             return np.average(np.array(embeddings), axis=0)
 
     else:
+        copy_cleaned_tokens = cleaned_tokens.copy()
         # now that we have normal words -> delete the stopwords embeddings
-        for index, w in enumerate(cleaned_tokens):
-            if w in stop_words:
-                copy_embeddings[index] = [0]
+        if use_stop_word_filtering:
+            for index, w in enumerate(cleaned_tokens):
+                if w in stop_words:
+                    copy_embeddings[index] = [0]
+                    copy_cleaned_tokens[index] = [0]
         filtered = np.array(list(filter(lambda x: len(x) > 1, copy_embeddings)))
-        if np.count_nonzero(filtered) > 0:
+        filtered_tokens = np.array(list(filter(lambda x: len(x) > 1, copy_cleaned_tokens)))
+
+        if use_bert:
+            return model.encode([" ".join(filtered_tokens)])[0]
+        else:
             return np.average(filtered, axis=0)
-        return np.average(embeddings, axis=0)
 
 
 def embed_token_visually(token):
