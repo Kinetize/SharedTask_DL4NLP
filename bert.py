@@ -1,11 +1,12 @@
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
 from preprocessing import get_datasets
 
 
 def get_similarities(dataset):
-    return cosine_similarity(dataset[0][:, 0], dataset[0][:, 1]).diagonal()
+    return np.clip(cosine_similarity(dataset[0][:, 0], dataset[0][:, 1]).diagonal(), 0., 1.)
 
 
 def mse_for_ds(dataset):
