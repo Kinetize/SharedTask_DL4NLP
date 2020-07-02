@@ -6,6 +6,7 @@ from util import get_similarities, spearman_metric
 from adversarial_attacks import VIPER_ICES, VIPER_DCES, VIPER_ECES, DisemvowelingAttack, AttackPipeline
 
 
+run_adverserial = False
 run_best_system = True
 
 
@@ -23,7 +24,8 @@ if __name__ == "__main__":
         print(f'Config: {config}')
 
         attack_pipeline = AttackPipeline([DisemvowelingAttack(p=0.1), VIPER_ECES(p=0.1)])
-        dev, test, test_scoreboard, test_final = get_datasets([('development', attack_pipeline), 'test-hex06',
+        dev, test, test_scoreboard, test_final = get_datasets([('development', attack_pipeline)
+                                                               if run_adverserial else 'development', 'test-hex06',
                                                                'test-scoreboard', 'test-final'],
                                                   use_edit_distance_correction=config[0],
                                                   use_stop_word_filtering=config[1],
