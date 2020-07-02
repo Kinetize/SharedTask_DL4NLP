@@ -51,8 +51,8 @@ if __name__ == "__main__":
         dev_spearman = spearman_metric(dev[1], [p[0] for p in model.predict(dev[0], batch_size=100)])
         test_spearman = spearman_metric(test[1], [p[0] for p in model.predict(test[0], batch_size=100)])
 
-        predictions = model.predict(test_scoreboard[0], batch_size=100)
-        predictions_final = model.predict(test_final[0], batch_size=100)
+        predictions = model.predict(test_scoreboard[0], batch_size=1)
+        predictions_final = model.predict(test_final[0], batch_size=1)
 
         with open('scores_nn.txt', 'w') as f:
             for p in predictions:

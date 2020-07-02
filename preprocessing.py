@@ -121,6 +121,9 @@ def get_datasets(datasets,
             filtered = np.array(list(filter(lambda x: len(x) > 1, copy_embeddings)))
             filtered_tokens = np.array(list(filter(lambda x: len(x) > 1, copy_cleaned_tokens)))
 
+            if len(filtered_tokens) == 0:  # No word left after stop-word filtering
+                filtered = np.zeros((1, emb_dim))
+
             if use_bert:
                 return model.encode([" ".join(filtered_tokens)])[0]
             else:
