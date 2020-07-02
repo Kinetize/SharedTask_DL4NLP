@@ -18,7 +18,7 @@ def mse_for_ds(dataset):
 
 if __name__ == "__main__":
     results = []
-    configurations = [(False, False, False, False)] if run_best_system else list(product([False, True], repeat=4))
+    configurations = [(True, True, True, False)] if run_best_system else list(product([False, True], repeat=4))
 
     for config in configurations:
         print(f'Config: {config}')
