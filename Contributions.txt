@@ -1,0 +1,19 @@
+In general, the person who conducted research / did the implementation on specific topics did also wrote about that in the report and designed the slides for that.
+
+Jonas Jäger:
+-Adversarial Attacks / Training
+-Visual Character Embeddings
+-Character Based Text-Cleaning
+-Advanced BERT-Models
+
+Nils Thoma:
+-Basic Preprocessing
+-Baseline Model
+-BERT
+-Hyperparameter Search
+
+Dominik Berberich:
+-EditDistances
+-EditRatios
+-(Weighted) Average Sentence Embeddings
+-StopWordFilter
