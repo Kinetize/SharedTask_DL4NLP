@@ -1,4 +1,4 @@
-In general, the person who conducted research / did the implementation on specific topics did also wrote about that in the report and designed the slides for that.
+In general, the person who conducted research / did the implementation on specific topics did also wrote about that in the report and designed the slides for it.
 
 Jonas Jäger:
 -Adversarial Attacks / Training
